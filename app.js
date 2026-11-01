@@ -281,7 +281,7 @@ function renderModuleFields() {
   });
 }
 $('addModule').addEventListener('click', () => {
-  if (draftModules.length >= 100) return alert('Máximo 100 módulos por tarea.');
+  if (draftModules.length >= 200) return alert('Máximo 200 módulos por tarea.');
   draftModules.push({id:makeId(),name:'',detail:'',done:false,activities:[]});renderModuleFields();
 });
 
