@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard de Tareas</title>
+  <link rel="stylesheet" href="styles.css?v=2">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">ORGANIZADOR PERSONAL</p>
+        <h1>Dashboard de tareas</h1>
+        <p class="subtitle">Organiza tus pendientes y monitorea tu progreso.</p>
+      </div>
+    </header>
+
+    <section class="summary" aria-label="Resumen de tareas">
+      <article class="stat"><span>Total</span><strong id="totalCount">0</strong></article>
+      <article class="stat pending"><span>Pendientes</span><strong id="pendingCount">0</strong></article>
+      <article class="stat progress"><span>En proceso</span><strong id="progressCount">0</strong></article>
+      <article class="stat completed"><span>Finalizadas</span><strong id="completedCount">0</strong></article>
+      <article class="stat cancelled"><span>Canceladas</span><strong id="cancelledCount">0</strong></article>
+    </section>
+
+    <section class="panel completion" aria-label="Porcentaje completado">
+      <div class="section-heading"><h2>Avance general</h2><strong id="completionText">0%</strong></div>
+      <div class="progress-track" role="progressbar" aria-label="Porcentaje de tareas completadas" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="completionBar"><div id="completionFill"></div></div>
+      <p>Las tareas canceladas no se consideran en el cálculo.</p>
+    </section>
+
+    <section class="panel completion"><div class="section-heading"><h2>Avance real del proyecto</h2><strong id="overallText">0%</strong></div><div class="progress-track"><div id="overallFill" class="overall-fill"></div></div><p>Promedio de avance de tareas no canceladas; cada tarea tiene el mismo peso.</p></section>
+
+    <section class="panel">
+      <h2 id="formTitle">Nueva tarea</h2>
+      <form id="taskForm">
+        <div class="form-grid">
+          <label class="description-field">Descripción
+            <textarea id="description" maxlength="500" rows="3" placeholder="¿Qué necesitas hacer?" required></textarea>
+          </label>
+          <label>Estatus
+            <select id="status">
+              <option value="Pendiente">Pendiente</option>
+              <option value="En proceso">En proceso</option>
+              <option value="Finalizada">Finalizada</option>
+              <option value="Cancelada">Cancelada</option>
+            </select>
+          </label>
+          <label>Prioridad
+            <select id="priority">
+              <option value="Media">Media</option>
+              <option value="Alta">Alta</option>
+              <option value="Baja">Baja</option>
+            </select>
+          </label>
+          <label>Fecha de vencimiento
+            <input type="date" id="dueDate">
+          </label>
+        </div>
+        <div class="modules-editor"><div class="section-heading"><h2>Módulos de la tarea</h2><button type="button" class="btn secondary" id="addModule">+ Agregar módulo</button></div><p class="subtitle">Define cuantos módulos necesitas. Agrega actividades y márcalas como finalizadas para calcular el porcentaje automáticamente. También puedes finalizar un módulo sin actividades.</p><div id="moduleFields" class="module-fields"></div></div>
+        <div class="actions">
+          <button type="submit" id="saveButton" class="btn primary">Agregar tarea</button>
+          <button type="button" id="cancelEdit" class="btn secondary" hidden>Cancelar edición</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="section-heading"><h2>Mis tareas</h2><span id="resultCount" class="result-count">0 resultados</span></div>
+      <div class="filters">
+        <label>Buscar por descripción
+          <input type="search" id="searchInput" placeholder="Buscar tarea...">
+        </label>
+        <label>Filtrar estatus
+          <select id="statusFilter">
+            <option value="">Todos</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="En proceso">En proceso</option>
+            <option value="Finalizada">Finalizada</option>
+            <option value="Cancelada">Cancelada</option>
+          </select>
+        </label>
+        <label>Filtrar prioridad
+          <select id="priorityFilter">
+            <option value="">Todas</option>
+            <option value="Alta">Alta</option>
+            <option value="Media">Media</option>
+            <option value="Baja">Baja</option>
+          </select>
+        </label>
+      </div>
+      <div id="taskList" class="task-list" aria-live="polite"></div>
+      <p id="emptyMessage" class="empty">Todavía no hay tareas que mostrar.</p>
+    </section>
+  </main>
+</body>
+</html>
