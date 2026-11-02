@@ -281,7 +281,7 @@ function renderModuleFields() {
   });
 }
 $('addModule').addEventListener('click', () => {
-  if (draftModules.length >= 200) return alert('Máximo 200 módulos por tarea.');
+  if (draftModules.length >= 100) return alert('Máximo 100 módulos por tarea.');
   draftModules.push({id:makeId(),name:'',detail:'',done:false,activities:[]});renderModuleFields();
 });
 
@@ -291,3 +291,93 @@ function toggleModule(taskId,moduleId,done) {
 function toggleActivity(taskId,moduleId,activityId,done) {
   updateTasks(tasks.map(t=>t.id!==taskId?t:{...t,modules:t.modules.map(m=>m.id!==moduleId?m:{...m,activities:m.activities.map(a=>a.id!==activityId?a:{...a,done})})}));
 }
+
+
+/* ===== EXPORTACIÓN DE REPORTES ===== */
+function exportTasks() {
+  if (!$('exportFiltered').checked) return tasks;
+  const query = $('searchInput').value.trim().toLocaleLowerCase('es');
+  const status = $('statusFilter').value;
+  const priority = $('priorityFilter').value;
+  return tasks.filter(t => t.description.toLocaleLowerCase('es').includes(query) &&
+    (!status || t.status === status) && (!priority || t.priority === priority));
+}
+
+function reportRows(selected) {
+  const rows = [];
+  for (const task of selected) {
+    rows.push(['Tarea',task.description,'',task.status,task.priority,formatDate(task.dueDate),`${progressOf(task).toFixed(1)}%`]);
+    for (const mod of task.modules) {
+      const progress = moduleProgress(mod);
+      rows.push(['Módulo',task.description,mod.name,progress === 100 ? 'Finalizado' : 'En proceso','','',`${progress.toFixed(1)}%`]);
+      if (mod.detail) rows.push(['Detalle',task.description,mod.name,mod.detail,'','','']);
+      for (const act of mod.activities) {
+        rows.push(['Actividad',task.description,`${mod.name} / ${act.name}`,act.done?'Finalizada':'Pendiente','','',act.done?'100%':'0%']);
+      }
+    }
+  }
+  return rows;
+}
+
+function downloadCSV() {
+  const selected = exportTasks();
+  if (!selected.length) return alert('No hay tareas para exportar.');
+  const active = selected.filter(t=>t.status!=='Cancelada');
+  const avg = active.length ? active.reduce((s,t)=>s+progressOf(t),0)/active.length : 0;
+  const rows = [
+    ['Reporte de tareas y módulos'],
+    ['Generado',new Date().toLocaleString('es-MX')],
+    ['Total de tareas',selected.length],
+    ['Avance general',`${avg.toFixed(1)}%`],
+    [],
+    ['Tipo','Tarea','Módulo / Actividad','Estado / Detalle','Prioridad','Vencimiento','Avance'],
+    ...reportRows(selected)
+  ];
+  const csv = '\uFEFF' + rows.map(row=>row.map(value=>'"'+String(value??'').replaceAll('"','""')+'"').join(',')).join('\r\n');
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url; link.download = 'reporte-tareas.csv'; document.body.append(link); link.click(); link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+function printReport() {
+  const selected = exportTasks();
+  if (!selected.length) return alert('No hay tareas para imprimir.');
+  const active = selected.filter(t=>t.status!=='Cancelada');
+  const avg = active.length ? active.reduce((s,t)=>s+progressOf(t),0)/active.length : 0;
+  const report = document.createElement('section');
+  report.className = 'print-report';
+  const heading = document.createElement('h1'); heading.textContent = 'Reporte de tareas y módulos';
+  const summary = document.createElement('p');
+  summary.textContent = `Generado: ${new Date().toLocaleString('es-MX')} | Tareas: ${selected.length} | Avance general: ${avg.toFixed(1)}%`;
+  report.append(heading,summary);
+  for (const task of selected) {
+    const block=document.createElement('article');block.className='print-task';
+    const title=document.createElement('h2');title.textContent=task.description;
+    const meta=document.createElement('p');meta.textContent=`${task.status} · Prioridad ${task.priority} · Vence: ${formatDate(task.dueDate)} · Avance ${progressOf(task).toFixed(1)}%`;
+    block.append(title,meta);
+    for (const mod of task.modules) {
+      const modBlock=document.createElement('div');modBlock.className='print-module';
+      const modTitle=document.createElement('h3');modTitle.textContent=`${mod.name} — ${moduleProgress(mod).toFixed(1)}%`;
+      const detail=document.createElement('p');detail.textContent=mod.detail || 'Sin detalles';
+      modBlock.append(modTitle,detail);
+      if(mod.activities.length){
+        const list=document.createElement('ul');
+        for(const a of mod.activities){const li=document.createElement('li');li.textContent=`${a.done?'✓':'○'} ${a.name} — ${a.done?'100%':'0%'}`;list.append(li);}
+        modBlock.append(list);
+      } else {
+        const state=document.createElement('p');state.textContent=mod.done?'Módulo finalizado':'Módulo pendiente';modBlock.append(state);
+      }
+      block.append(modBlock);
+    }
+    report.append(block);
+  }
+  document.body.append(report);
+  const cleanup=()=>{report.remove();window.removeEventListener('afterprint',cleanup);};
+  window.addEventListener('afterprint',cleanup);
+  window.print();
+}
+
+$('exportExcel').addEventListener('click',downloadCSV);
+$('exportPdf').addEventListener('click',printReport);
